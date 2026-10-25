@@ -8,13 +8,14 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  stores       Store[]
+  id             String   @id @default(cuid())
+  supabaseUserId String?  @unique
+  name           String
+  email          String   @unique
+  passwordHash   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  stores         Store[]
 }
 
 model Store {
@@ -115,4 +116,3 @@ model TransactionItem {
   @@index([transactionId])
   @@index([productId])
 }
-

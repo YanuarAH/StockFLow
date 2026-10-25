@@ -85,8 +85,11 @@ export default function DashboardShell({
   const isCashierMode = pathname.startsWith("/dashboard/pos");
 
   async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/login";
+    const response = await fetch("/api/auth/logout", { method: "POST" });
+    if (!response.ok) {
+      throw new Error("Gagal mengakhiri sesi. Silakan coba lagi.");
+    }
+    router.push("/login");
   }
 
   function switchMode(target: "STOCK" | "POS") {

@@ -14,11 +14,13 @@ export default function RegisterPage() {
   const [storePhone, setStorePhone] = useState("");
   const [storeAddress, setStoreAddress] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
@@ -42,7 +44,13 @@ export default function RegisterPage() {
         return;
       }
 
-      window.location.href = "/dashboard";
+      if (data.requiresEmailConfirmation) {
+        setSuccess(data.message);
+        setLoading(false);
+        return;
+      }
+
+      router.push("/dashboard");
     } catch {
       setError("Terjadi kesalahan jaringan.");
       setLoading(false);
@@ -74,6 +82,12 @@ export default function RegisterPage() {
 
       <div className="mt-7 sm:mx-auto sm:w-full sm:max-w-lg">
         <div className="bg-white py-8 px-6 shadow-xs rounded-2xl border border-slate-200 sm:px-8">
+          {success && (
+            <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">
+              {success}
+            </div>
+          )}
+
           {error && (
             <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-rose-700 text-sm">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -203,4 +217,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession, createSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -44,34 +44,17 @@ export async function PUT(request: Request) {
       },
     });
 
-    let updatedUserName = session.userName;
     if (ownerName && ownerName.trim()) {
-      const updatedUser = await prisma.user.update({
+      await prisma.user.update({
         where: { id: session.userId },
         data: { name: ownerName.trim() },
       });
-      updatedUserName = updatedUser.name;
     }
 
-    const newToken = await createSessionToken({
-      ...session,
-      userName: updatedUserName,
-      storeName: updatedStore.name,
-    });
-
-    const response = NextResponse.json({
+    return NextResponse.json({
       message: "Profil toko berhasil diperbarui.",
       store: updatedStore,
     });
-
-    response.cookies.set(SESSION_COOKIE_NAME, newToken, {
-      httpOnly: true,
-      path: "/",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-    });
-
-    return response;
   } catch (error) {
     console.error("Update store error:", error);
     return NextResponse.json(
@@ -80,4 +63,3 @@ export async function PUT(request: Request) {
     );
   }
 }
-

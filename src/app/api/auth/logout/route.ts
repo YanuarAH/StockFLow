@@ -1,14 +1,20 @@
 import { NextResponse } from "next/server";
-import { SESSION_COOKIE_NAME } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST() {
-  const response = NextResponse.json({ message: "Berhasil keluar" });
-  response.cookies.set(SESSION_COOKIE_NAME, "", {
-    httpOnly: true,
-    path: "/",
-    sameSite: "lax",
-    maxAge: 0,
-  });
-  return response;
-}
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      throw error;
+    }
 
+    return NextResponse.json({ message: "Berhasil keluar" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return NextResponse.json(
+      { error: "Gagal mengakhiri sesi. Silakan coba lagi." },
+      { status: 500 }
+    );
+  }
+}

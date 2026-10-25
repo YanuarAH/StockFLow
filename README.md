@@ -31,11 +31,11 @@
 
 ## Tech Stack
 
-- **Framework:** [Next.js 16](https://nextjs.org/) (App Router, Server & Client Components)
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
 - **Bahasa:** TypeScript
-- **Styling & UI:** Tailwind CSS + Lucide Icons (Desain *Mobile-First* & Responsif)
+- **Styling & UI:** Tailwind CSS + Lucide Icons
 - **Database & ORM:** PostgreSQL + [Prisma ORM](https://www.prisma.io/)
-- **Autentikasi:** JWT Session (`jose` + `bcryptjs`) via HTTP-Only Cookie
+- **Autentikasi:** Supabase Auth dengan cookie session HTTP-only melalui `@supabase/ssr`
 
 ---
 
@@ -43,14 +43,22 @@
 
 ### 1. Prasyarat
 - Node.js `v20.9+`
-- PostgreSQL berjalan di komputer lokal
+- Project Supabase dengan Auth dan PostgreSQL
 
-### 2. Konfigurasi Environment (`.env`)
-Buat atau sesuaikan file `.env` di root direktori proyek:
+### 2. Konfigurasi Supabase dan Environment
+Buat `.env.local` di root project dan isi URL serta publishable key Supabase. `DATABASE_URL` adalah connection string PostgreSQL yang digunakan Prisma:
+
 ```env
-DATABASE_URL="postgresql://postgres:PASSWORD_ANDA@localhost:5432/umkm_stock_db?schema=public"
-JWT_SECRET="umkm-pintar-saas-secret-key-2026-super-secure"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="sb_publishable_..."
 ```
+
+Di Supabase, tambahkan URL callback ke **Authentication → URL Configuration → Redirect URLs**:
+- Lokal: `http://localhost:3000/auth/callback`
+- Production: `https://<domain-vercel>/auth/callback`
+
+Jika email confirmation diaktifkan, pengguna harus mengonfirmasi email sebelum masuk.
 
 ### 3. Instalasi & Sinkronisasi Database
 ```bash
@@ -62,4 +70,5 @@ npx prisma db push
 ```bash
 npm run dev
 ```
-Buka `http://localhost:3000` di browser Anda. Untuk mencoba langsung dengan data contoh lengkap, buka halaman `/login` dan klik tombol **"Masuk Akun Demo (Toko Berkah)"**.
+
+Buka `http://localhost:3000` dan daftar melalui `/register`. Pada deployment, tambahkan environment variables yang sama di pengaturan project Vercel. `DATABASE_URL` harus dirahasiakan; publishable key Supabase memang dirancang untuk digunakan di aplikasi.

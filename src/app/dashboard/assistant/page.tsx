@@ -218,6 +218,7 @@ export default function AssistantPage() {
         matchedProductName: a.name,
         matchedSku: a.sku,
         unit: a.unit,
+        inferredCategory: "",
         confidence: 100,
         qty: a.recommendedRestockQty,
         unitCost: a.costPrice,

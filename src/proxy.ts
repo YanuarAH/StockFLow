@@ -1,44 +1,37 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
-
-const SECRET_KEY = new TextEncoder().encode(
-  process.env.JWT_SECRET || "umkm-pintar-saas-secret-key-2026-super-secure"
-);
-const SESSION_COOKIE_NAME = "umkm_session";
-
-async function isValidSession(token: string | undefined): Promise<boolean> {
-  if (!token) return false;
-  try {
-    await jwtVerify(token, SECRET_KEY);
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { NextResponse } from "next/server";
+import { updateSession } from "@/lib/supabase/proxy";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const isAuthenticated = await isValidSession(token);
+  const { response, user } = await updateSession(request);
 
-  // Jika sudah login dan membuka halaman depan (/), /login, atau /register -> langsung arahkan ke /dashboard
   if (
-    isAuthenticated &&
+    user &&
     (pathname === "/" || pathname === "/login" || pathname === "/register")
   ) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    const redirectResponse = NextResponse.redirect(
+      new URL("/dashboard", request.url)
+    );
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
   }
 
-  // Jika belum login dan mencoba membuka /dashboard -> langsung arahkan ke /login
-  if (!isAuthenticated && pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  if (!user && pathname.startsWith("/dashboard")) {
+    const redirectResponse = NextResponse.redirect(
+      new URL("/login", request.url)
+    );
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
   matcher: ["/", "/login", "/register", "/dashboard/:path*"],
 };
-

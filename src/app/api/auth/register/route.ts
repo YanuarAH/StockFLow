@@ -1,14 +1,23 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+import { ensureUserProfile } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { createSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { name, email, password, storeName, storeAddress, storePhone } = body;
 
-    if (!name || !email || !password || !storeName) {
+    if (
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      typeof storeName !== "string" ||
+      !name.trim() ||
+      !email.trim() ||
+      !password ||
+      !storeName.trim()
+    ) {
       return NextResponse.json(
         { error: "Nama lengkap, email, password, dan nama toko wajib diisi." },
         { status: 400 }
@@ -23,90 +32,88 @@ export async function POST(request: Request) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-
     const existingUser = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
-
-    if (existingUser) {
+    if (existingUser?.passwordHash && !existingUser.supabaseUserId) {
       return NextResponse.json(
-        { error: "Email sudah terdaftar. Silakan gunakan email lain atau login." },
+        {
+          error:
+            "Email ini sudah memiliki akun toko. Masuk dengan password lama untuk memindahkannya ke Supabase Auth.",
+        },
+        { status: 409 }
+      );
+    }
+
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        data: {
+          name: name.trim(),
+          storeName: storeName.trim(),
+          storeAddress:
+            typeof storeAddress === "string" ? storeAddress.trim() : "",
+          storePhone: typeof storePhone === "string" ? storePhone.trim() : "",
+        },
+        emailRedirectTo: new URL(
+          "/auth/callback?next=/dashboard",
+          request.url
+        ).toString(),
+      },
+    });
+
+    if (error || !data.user) {
+      return NextResponse.json(
+        { error: error?.message ?? "Pendaftaran Supabase gagal." },
         { status: 400 }
       );
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    // Create User + Store + Default Categories in a single transaction
-    const result = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          name: name.trim(),
-          email: normalizedEmail,
-          passwordHash,
-        },
+    if (!data.session) {
+      return NextResponse.json({
+        message: "Periksa email Anda untuk mengonfirmasi pendaftaran.",
+        requiresEmailConfirmation: true,
       });
+    }
 
-      const store = await tx.store.create({
-        data: {
-          name: storeName.trim(),
-          address: storeAddress?.trim() || null,
-          phone: storePhone?.trim() || null,
-          ownerId: user.id,
-        },
-      });
+    let profile;
+    try {
+      profile = await ensureUserProfile(data.user);
+    } catch (profileError) {
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) {
+        console.error("Registration profile sign-out error:", signOutError);
+      }
+      throw profileError;
+    }
 
-      // Buat kategori awal agar UMKM langsung siap pakai
-      await tx.category.createMany({
-        data: [
-          { name: "Makanan & Camilan", storeId: store.id },
-          { name: "Minuman", storeId: store.id },
-          { name: "Sembako & Kebutuhan Pokok", storeId: store.id },
-          { name: "Lainnya", storeId: store.id },
-        ],
-      });
+    const store = profile.stores[0];
+    if (!store) {
+      throw new Error("Newly registered user has no associated store.");
+    }
 
-      return { user, store };
-    });
-
-    const token = await createSessionToken({
-      userId: result.user.id,
-      userName: result.user.name,
-      userEmail: result.user.email,
-      storeId: result.store.id,
-      storeName: result.store.name,
-    });
-
-    const response = NextResponse.json({
+    return NextResponse.json({
       message: "Pendaftaran toko berhasil!",
       user: {
-        id: result.user.id,
-        name: result.user.name,
-        email: result.user.email,
+        id: profile.id,
+        name: profile.name,
+        email: profile.email,
       },
       store: {
-        id: result.store.id,
-        name: result.store.name,
+        id: store.id,
+        name: store.name,
       },
     });
-
-    response.cookies.set(SESSION_COOKIE_NAME, token, {
-      httpOnly: true,
-      path: "/",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 hari
-    });
-
-    return response;
   } catch (error) {
     console.error("Register error:", error);
     return NextResponse.json(
       {
         error:
-          "Gagal mendaftarkan akun. Pastikan koneksi database PostgreSQL sudah aktif.",
+          "Gagal mendaftarkan akun. Periksa koneksi Supabase dan database.",
       },
       { status: 500 }
     );
   }
 }
-

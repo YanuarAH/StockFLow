@@ -1,21 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Store, LogIn, Sparkles, AlertCircle, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Store, LogIn, AlertCircle, Loader2 } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
+  const callbackError = searchParams.get("error");
+  const callbackMessage =
+    callbackError === "auth_callback"
+      ? "Tautan konfirmasi tidak valid atau sudah kedaluwarsa. Silakan daftar kembali."
+      : callbackError === "profile_setup"
+        ? "Akun terverifikasi, tetapi profil toko gagal disiapkan. Silakan coba masuk."
+        : "";
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
@@ -32,28 +41,16 @@ export default function LoginPage() {
         return;
       }
 
-      window.location.href = "/dashboard";
+      if (data.requiresEmailConfirmation) {
+        setSuccess(data.message);
+        setLoading(false);
+        return;
+      }
+
+      router.push("/dashboard");
     } catch {
       setError("Terjadi kesalahan jaringan.");
       setLoading(false);
-    }
-  }
-
-  async function handleDemoLogin() {
-    setError("");
-    setDemoLoading(true);
-    try {
-      const res = await fetch("/api/seed", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Gagal masuk ke akun demo.");
-        setDemoLoading(false);
-        return;
-      }
-      window.location.href = "/dashboard";
-    } catch {
-      setError("Gagal menyiapkan akun demo.");
-      setDemoLoading(false);
     }
   }
 
@@ -82,10 +79,16 @@ export default function LoginPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-xs rounded-2xl border border-slate-200 sm:px-8">
-          {error && (
+          {success && (
+            <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">
+              {success}
+            </div>
+          )}
+
+          {(error || callbackMessage) && (
             <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-rose-700 text-sm">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <span>{error}</span>
+              <span>{error || callbackMessage}</span>
             </div>
           )}
 
@@ -120,7 +123,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading || demoLoading}
+              disabled={loading}
               className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold text-sm transition shadow-sm cursor-pointer"
             >
               {loading ? (
@@ -132,39 +135,16 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-400 font-medium">
-                  Atau Coba Langsung
-                </span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              disabled={loading || demoLoading}
-              className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-semibold text-sm transition cursor-pointer"
-            >
-              {demoLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-amber-700" />
-              ) : (
-                <Sparkles className="w-4 h-4 text-amber-600" />
-              )}
-              <span>
-                {demoLoading
-                  ? "Menyiapkan Toko Demo..."
-                  : "Masuk Akun Demo (Toko Berkah)"}
-              </span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
   );
 }
 
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
