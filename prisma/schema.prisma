@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  stores       Store[]
+}
+
+model Store {
+  id             String          @id @default(cuid())
+  name           String
+  address        String?
+  phone          String?
+  ownerId        String
+  owner          User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  categories     Category[]
+  products       Product[]
+  stockMovements StockMovement[]
+  transactions   Transaction[]
+
+  @@index([ownerId])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  storeId   String
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  products  Product[]
+
+  @@index([storeId])
+}
+
+model Product {
+  id               String            @id @default(cuid())
+  sku              String
+  name             String
+  categoryId       String?
+  category         Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  unit             String            @default("pcs")
+  costPrice        Int               @default(0) // Harga Modal (Beli)
+  sellPrice        Int               @default(0) // Harga Jual
+  stock            Int               @default(0) // Stok Saat Ini
+  minStock         Int               @default(5) // Batas Minimum Peringatan
+  storeId          String
+  store            Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  stockMovements   StockMovement[]
+  transactionItems TransactionItem[]
+
+  @@index([storeId])
+  @@index([categoryId])
+}
+
+model StockMovement {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  type      String   // IN (Restock), OUT (Penjualan), ADJUST (Opname / Rusak)
+  quantity  Int      // Jumlah perubahan (+ atau -)
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([storeId, createdAt])
+  @@index([productId])
+}
+
+model Transaction {
+  id            String            @id @default(cuid())
+  invoiceNumber String
+  totalAmount   Int               // Total Omzet
+  totalProfit   Int               // Total Laba Bersih
+  paymentAmount Int               // Uang diterima dari pembeli
+  changeAmount  Int               // Uang kembalian
+  paymentMethod String            @default("CASH") // CASH, QRIS, TRANSFER
+  customerName  String?
+  storeId       String
+  store         Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt     DateTime          @default(now())
+  items         TransactionItem[]
+
+  @@index([storeId, createdAt])
+}
+
+model TransactionItem {
+  id            String      @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  productId     String?
+  product       Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName   String      // Snapshot nama barang saat terjual
+  unit          String      @default("pcs")
+  quantity      Int
+  costPrice     Int         // Snapshot harga modal saat terjual
+  sellPrice     Int         // Snapshot harga jual saat terjual
+  subtotal      Int
+
+  @@index([transactionId])
+  @@index([productId])
+}
+
