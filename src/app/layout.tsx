@@ -13,9 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "StokUMKM — Aplikasi Manajemen Stok Barang & Kasir UMKM",
+  title: "StockFlow — Aplikasi Manajemen Stok Barang & Kasir UMKM",
   description:
     "Platform SaaS Multi-Toko untuk mengelola inventori barang, kulakan, kasir (POS), dan laporan laba bersih UMKM Indonesia.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
