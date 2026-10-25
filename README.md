@@ -1,6 +1,6 @@
-# StokUMKM — Platform SaaS Manajemen Stok Barang & Kasir (POS) UMKM
+# StockFlow — Platform SaaS Manajemen Stok Barang & Kasir (POS) UMKM
 
-**StokUMKM** adalah aplikasi web *Multi-Tenant (SaaS)* modern yang dirancang khusus untuk membantu pelaku UMKM (warung sembako, toko kelontong, minimarket lokal, dan ritel kecil) mengelola stok barang, mencatat kulakan/opname, melayani transaksi kasir cepat, mencetak struk bergaya minimarket (Indomaret/Alfamart), serta memantau laporan laba bersih secara *real-time*.
+**StockFlow** adalah aplikasi web *Multi-Tenant (SaaS)* modern yang dirancang khusus untuk membantu pelaku UMKM (warung sembako, toko kelontong, minimarket lokal, dan ritel kecil) mengelola stok barang, mencatat kulakan/opname, melayani transaksi kasir cepat, mencetak struk bergaya minimarket (Indomaret/Alfamart), serta memantau laporan laba bersih secara *real-time*.
 
 ---
 
