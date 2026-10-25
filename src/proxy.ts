@@ -4,10 +4,10 @@ import { updateSession } from "@/lib/supabase/proxy";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const { response, user } = await updateSession(request);
+  const { response, userId } = await updateSession(request);
 
   if (
-    user &&
+    userId &&
     (pathname === "/" || pathname === "/login" || pathname === "/register")
   ) {
     const redirectResponse = NextResponse.redirect(
@@ -19,7 +19,7 @@ export async function proxy(request: NextRequest) {
     return redirectResponse;
   }
 
-  if (!user && pathname.startsWith("/dashboard")) {
+  if (!userId && pathname.startsWith("/dashboard")) {
     const redirectResponse = NextResponse.redirect(
       new URL("/login", request.url)
     );

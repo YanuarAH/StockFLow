@@ -97,12 +97,10 @@ export async function ensureUserProfile(authUser: SupabaseUser) {
 
 export async function getSession(): Promise<SessionPayload | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getClaims();
 
-  if (!user) {
+  const userId = data?.claims.sub;
+  if (!userId) {
     if (error && error.name !== "AuthSessionMissingError") {
       throw error;
     }
@@ -110,7 +108,7 @@ export async function getSession(): Promise<SessionPayload | null> {
   }
 
   const profile = await prisma.user.findUnique({
-    where: { supabaseUserId: user.id },
+    where: { supabaseUserId: userId },
     include: { stores: { orderBy: { createdAt: "asc" } } },
   });
   const store = profile?.stores[0];

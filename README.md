@@ -35,7 +35,7 @@
 - **Bahasa:** TypeScript
 - **Styling & UI:** Tailwind CSS + Lucide Icons
 - **Database & ORM:** PostgreSQL + [Prisma ORM](https://www.prisma.io/)
-- **Autentikasi:** Supabase Auth dengan cookie session HTTP-only melalui `@supabase/ssr`
+- **Autentikasi:** Supabase Auth dengan cookie session HTTP-only melalui `@supabase/ssr`; validasi sesi memakai JWT claims terverifikasi untuk menghindari pemeriksaan user ke Auth API pada setiap navigasi.
 
 ---
 

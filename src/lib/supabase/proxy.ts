@@ -22,9 +22,7 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getClaims();
 
-  return { response, user };
+  return { response, userId: error ? null : data?.claims.sub ?? null };
 }
