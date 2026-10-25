@@ -46,7 +46,7 @@
 - Project Supabase dengan Auth dan PostgreSQL
 
 ### 2. Konfigurasi Supabase dan Environment
-Buat `.env.local` di root project dan isi URL serta publishable key Supabase. `DATABASE_URL` adalah connection string PostgreSQL yang digunakan Prisma. Vercel Supabase Integration dapat menyediakan `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY` (atau `SUPABASE_ANON_KEY`); aplikasi menerima nama tersebut maupun pasangan `NEXT_PUBLIC_*`:
+Buat `.env.local` di root project dan isi URL serta publishable key Supabase. `DATABASE_URL` adalah connection string PostgreSQL yang digunakan Prisma secara lokal. Vercel Supabase Integration menyediakan `POSTGRES_PRISMA_URL` untuk Prisma serta `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY` untuk Auth; aplikasi menerima URL/key tersebut maupun pasangan `NEXT_PUBLIC_*`:
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public"
@@ -71,4 +71,4 @@ npx prisma db push
 npm run dev
 ```
 
-Buka `http://localhost:3000` dan daftar melalui `/register`. Di Vercel, pastikan integrasi juga menyediakan URL dan publishable/anon key Supabase serta tambahkan `DATABASE_URL` yang dipakai Prisma. Integrasi Auth tidak otomatis menjamin `DATABASE_URL` tersedia. `DATABASE_URL` harus dirahasiakan; publishable/anon key Supabase memang dirancang untuk digunakan di aplikasi. Jangan gunakan `SUPABASE_SECRET_KEY` atau service-role key sebagai publishable key.
+Buka `http://localhost:3000` dan daftar melalui `/register`. Di Vercel, pastikan integrasi menyediakan `POSTGRES_PRISMA_URL`, `NEXT_PUBLIC_SUPABASE_URL`, dan `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Prisma menggunakan `POSTGRES_PRISMA_URL` dari integrasi terlebih dahulu, dengan `DATABASE_URL` sebagai fallback lokal. Untuk membuat tabel di database production, jalankan `npx prisma db push` dari lingkungan yang memiliki `DATABASE_URL` terisi dengan connection string Supabase. Semua URL database dan `SUPABASE_SECRET_KEY` harus dirahasiakan; gunakan hanya publishable key/anon key untuk Supabase Auth.
