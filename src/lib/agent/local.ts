@@ -559,7 +559,7 @@ export function runLocalAgent(message: string, history: ChatTurn[], snap: StoreS
   if (looksLikeAdd) {
     if (!items.length) {
       return {
-        reply: "Boleh! Barang apa yang mau dicatat masuk dan berapa jumlahnya? Ketik santai saja, contoh:\n• *'tambah minyak goreng tropical 20 pouch'* atau\n• *'masuk indomie goreng 50 bungkus modal 2900'*",
+        reply: "Boleh! Barang apa yang mau dicatat masuk dan berapa jumlahnya? Bisa 1 barang atau banyak sekaligus, ketik santai saja, contoh:\n• *'tambah minyak goreng tropical 20 pouch'* atau\n• *'masuk indomie goreng 50 bungkus modal 2900'* atau\n• *'tambah beras 10, gula 5 modal 16k, telur 20 modal 26k'* (3 barang sekaligus)",
         suggestions: ["Tambah minyak tropical 20", "Tambah beras ramos 10 sak"],
       };
     }

@@ -201,8 +201,9 @@ export interface RawStockItem {
 }
 
 export function extractStockItems(text: string): RawStockItem[] {
+  // Split by multiple delimiters: newline, semicolon, comma, "dan", "sama", "terus", "lalu"
   const segments = text
-    .split(/\n|;|,|\s+dan\s+|\s+sama\s+|\s+terus\s+|\s+lalu\s+/i)
+    .split(/[\n;]|,\s|(?:^|\s)dan(?:\s|$)|(?:^|\s)sama(?:\s|$)|(?:^|\s)terus(?:\s|$)|(?:^|\s)lalu(?:\s|$)/i)
     .map((s) => s.trim())
     .filter((s) => s.length >= 2);
 
